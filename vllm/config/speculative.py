@@ -300,7 +300,13 @@ class SpeculativeConfig:
     @staticmethod
     def hf_config_override(hf_config: PretrainedConfig) -> PretrainedConfig:
         initial_architecture = hf_config.architectures[0]
-        if hf_config.model_type in (
+        if initial_architecture == "DeepseekV3ForCausalLMNextN":
+            # NextN is an external Eagle3 draft model, not built-in MTP.
+            # Strip auto_map to avoid trust_remote_code issues since vLLM
+            # has its own model class for NextN.
+            if hasattr(hf_config, "auto_map"):
+                del hf_config.auto_map
+        elif hf_config.model_type in (
             "deepseek_v3",
             "deepseek_v32",
             "glm_moe_dsa",
