@@ -1510,10 +1510,14 @@ class SpecDecodeBaseProposer:
             return False
         # DeepSeek NextN models use eh_proj with the target's final hidden
         # state only -- they do not use auxiliary intermediate hidden states.
-        draft_model_type = getattr(
-            getattr(self.draft_model_config, "hf_config", None),
-            "model_type", "")
-        if draft_model_type in ("deepseek_v3", "deepseek_v2"):
+        # EAGLEConfig wraps the inner model config, so we check both the
+        # outer model_type and the inner hf_config.model.model_type.
+        hf_cfg = getattr(self.draft_model_config, "hf_config", None)
+        draft_model_type = getattr(hf_cfg, "model_type", "")
+        inner_model_type = getattr(
+            getattr(hf_cfg, "model", None), "model_type", "")
+        if draft_model_type in ("deepseek_v3", "deepseek_v2") or \
+           inner_model_type in ("deepseek_v3", "deepseek_v2"):
             return False
         # Assume that eagle3 heads use aux hidden states by default
         use_aux_hidden_state = True
